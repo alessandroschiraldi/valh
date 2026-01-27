@@ -1,3 +1,4 @@
+from unittest.mock import call
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import joblib
 
-class StockAnalyzer:
+class Stock:
     def __init__(self, ticker):
         self.ticker = ticker
         self.data = None
@@ -46,3 +47,5 @@ class StockAnalyzer:
         plt.ylabel("Price")
         plt.legend()
         plt.show()
+
+
