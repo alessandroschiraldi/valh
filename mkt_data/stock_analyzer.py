@@ -39,13 +39,32 @@ class Stock:
         df = self.stock.get_balance_sheet()
         return df
     
-    def plot_prices(self, df):
+    def plot_prices(self, period='1y', interval='1d'):
+        historical_prices = self.historical_prices(period=period, interval=interval)
         plt.figure(figsize=(14, 7))
-        plt.plot(df.index, df['Close'], label='Close Price')
+        plt.plot(historical_prices.index, historical_prices['Close'], label='Close Price')
         plt.title(f"{self.ticker} Closing Prices")
         plt.xlabel("Date")
         plt.ylabel("Price")
         plt.legend()
         plt.show()
 
-
+class Portfolio:
+    def __init__(self, stocks, weights = None):
+        self.stocks = stocks
+        self.weights = weights if weights else [1] * len(stocks)
+        
+    def add_stock(self, stock, weight = 1):
+        self.stocks.append(stock)
+        self.weights.append(weight)
+        
+    def plot_prices(self, period='1y', interval='1d'):
+        plt.figure(figsize=(14, 7))
+        for stock in self.stocks:
+            historical_prices = stock.historical_prices(period=period, interval=interval)
+            plt.plot(historical_prices.index, historical_prices['Close'], label=stock.ticker)
+        plt.title("Portfolio Closing Prices")
+        plt.xlabel("Date")
+        plt.ylabel("Price")
+        plt.legend()
+        plt.show()
