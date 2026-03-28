@@ -1,4 +1,5 @@
 from unittest.mock import call
+from pyparsing import alphas
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -39,6 +40,32 @@ class Stock:
         df = self.stock.get_balance_sheet()
         return df
     
+    def main_statistics(self, period='1y', interval='1d'):
+        historical_prices = self.historical_prices(period,interval)
+        returns = historical_prices['Close'].pct_change().dropna()
+        alpha = returns.mean()
+        volatility = returns.std()
+        match interval:
+            case '1d':
+                alpha *= 252
+                volatility *= np.sqrt(252)
+            case '1w':
+                alpha *= 52
+                volatility *= np.sqrt(52)
+            case '1m':
+                alpha *= 12
+                volatility *= np.sqrt(12)
+        return alpha,volatility
+    
+    def alpha(self, period='1y', interval='1d'):
+        alpha,volatility = self.main_statistics()
+        return alpha
+    
+    def volatility(self, period='1y', interval='1d'):
+        alpha,volatility = self.main_statistics()
+        return volatility
+
+
     def plot_prices(self, period='1y', interval='1d'):
         historical_prices = self.historical_prices(period=period, interval=interval)
         plt.figure(figsize=(14, 7))
@@ -58,6 +85,21 @@ class Portfolio:
         self.stocks.append(stock)
         self.weights.append(weight)
         
+    def main_statistics(self, period='1y', interval='1d'):
+        alphas, volatilities = [], []
+        for stock in self.stocks:
+            alphas = [alphas, stock.alpha(period=period, interval=interval) ]
+            volatilities = [volatilities, stock.volatility(period=period, interval=interval)]
+        return alphas, volatilities
+    
+    def alphas(self, period='1y', interval='1d'):
+        alphas, volatilities = self.main_statistics(period=period, interval=interval)
+        return alphas
+    
+    def volatilities(self, period='1y', interval='1d'):
+        alphas, volatilities = self.main_statistics(period=period, interval=interval)
+        return volatilities
+
     def plot_prices(self, period='1y', interval='1d'):
         plt.figure(figsize=(14, 7))
         for stock in self.stocks:
