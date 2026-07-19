@@ -43,17 +43,14 @@ class Stock:
     def main_statistics(self, period='1y', interval='1d'):
         historical_prices = self.historical_prices(period,interval)
         returns = historical_prices['Close'].pct_change().dropna()
-        alpha = returns.mean()
+        alpha = ( historical_prices['Close'][-1] - historical_prices['Close'][0] ) / historical_prices['Close'][0]
         volatility = returns.std()
         match interval:
             case '1d':
-                alpha *= 252
                 volatility *= np.sqrt(252)
             case '1w':
-                alpha *= 52
                 volatility *= np.sqrt(52)
             case '1m':
-                alpha *= 12
                 volatility *= np.sqrt(12)
         return alpha,volatility
     
