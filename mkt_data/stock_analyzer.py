@@ -19,6 +19,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 import warnings
 warnings.filterwarnings("ignore")
 import joblib
+import scipy.stats as ss
+
 
 class Stock:
     def __init__(self, ticker):
@@ -61,6 +63,19 @@ class Stock:
     def volatility(self, period='1y', interval='1d'):
         alpha,volatility = self.main_statistics()
         return volatility
+    
+    def correl(self, stock, period='1y', interval='1d', hp_self = None):
+        if hp_self is None:
+            logging.info(f"Fetching info for {self.ticker}")
+            hp_self = self.historical_prices(period, interval)        
+        logging.info(f"Fetching info for {stock.ticker}")
+        hp_stock = stock.historical_prices(period, interval)
+        hp_merged = pd.concat([hp_self["Close"].rename("Close_self"),
+                               hp_stock["Close"].rename("Close_stock")],
+                               axis=1).dropna()
+        returns_self = hp_merged["Close_self"].pct_change().dropna()
+        returns_stock = hp_merged["Close_stock"].pct_change().dropna()
+        return ss.pearsonr(returns_self , returns_stock)[0]
 
 
     def plot_prices(self, period='1y', interval='1d'):
@@ -96,6 +111,19 @@ class Portfolio:
     def volatilities(self, period='1y', interval='1d'):
         alphas, volatilities = self.main_statistics(period=period, interval=interval)
         return volatilities
+    
+    def correlation_matrix(self, period='1y', interval='1d'):
+        n = len(self.stocks)
+        corr = np.ones([n,n])
+        for i in range(n):
+            hp_self = self.stocks[i].historical_prices(period, interval)  
+            for j in range(i+1, n):
+                corr[i,j] = self.stocks[i].correl(self.stocks[j], period, interval, hp_self = hp_self)
+                corr[j,i] = corr[i,j]
+        return corr
+             
+
+
 
     def plot_prices(self, period='1y', interval='1d'):
         plt.figure(figsize=(14, 7))
